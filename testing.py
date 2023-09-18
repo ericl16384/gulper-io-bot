@@ -1,20 +1,25 @@
 import time
 import cv2
 import pyautogui
-import numpy as np
+# import numpy as np
+import numpy_vectors as npv
 import mss
 import keyboard
 import sys
+import math
 
 
 START_KEY = "insert"
-EMERGENCY_STOP_KEY = "escape"
+EMERGENCY_STOP_KEY = "ctrl"
 STARTUP_TIMEOUT = 30
 
-MIN_LOOP_PERIOD = 0.5
+MIN_LOOP_PERIOD = 1 / 60
 
-screen_region = {"top": 0, "left": 0, "width": pyautogui.size()[0], "height": pyautogui.size()[1]}
-game_region = screen_region.copy() #{"top": 300, "left": 300, "width": 800, "height": 600}
+SCREEN_SIZE = (pyautogui.size()[0], pyautogui.size()[1])
+SCREEN_CENTER = (SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2)
+
+
+game_region = {"top": 100, "left": 100, "width": SCREEN_SIZE[0]-200, "height": SCREEN_SIZE[1]-200}
 
 
 EMERGENCY_STOP_ACTIVE = False
@@ -41,7 +46,7 @@ keyboard.on_press(_emergency_stop_trigger)
 
 
 
-def get_center_of_game_screen(game_region):
+def get_center_of_game_screen():
     return (game_region["left"] + game_region["width"] // 2, game_region["top"] + game_region["height"] // 2)
 
 
@@ -51,6 +56,14 @@ def get_screenshot():
         filename = sct.shot(output="screenshot.png")
 
     return cv2.imread(filename)
+
+
+
+def get_desired_direction():
+    t = (time.time() % (2*math.pi))
+    print(t)
+    d = (math.cos(t), math.sin(t))
+    return npv.normalize(npv.to_vector(d))
 
 
 def main():
@@ -63,27 +76,36 @@ def main():
         if time.time() >= end_time:
             global EMERGENCY_STOP_ACTIVE
             EMERGENCY_STOP_ACTIVE = True
-            print("startup timed out")
+            print(f"startup timed out {STARTUP_TIMEOUT}s")
 
     while True:
-        handle_emergency_stop()
-        # if keyboard.is_pressed(EMERGENCY_STOP_KEY):
+        iteration_end_time = time.time() + MIN_LOOP_PERIOD
 
-        # Read the captured screen
-        screen = get_screenshot()
-        
-        game_center = get_center_of_game_screen(game_region)
-        
-        handle_emergency_stop()
-
-        # not instant!
-        pyautogui.moveTo(game_center[0] + 50, game_center[1])
-        pyautogui.click()
 
         handle_emergency_stop()
+
+
+        # screenshot = get_screenshot()
         
-        end_time = time.time() + MIN_LOOP_PERIOD
-        while time.time() < end_time:
+
+        handle_emergency_stop()
+
+
+        # # not instant!
+        # pyautogui.moveTo(game_center[0] + 50, game_center[1])
+        # pyautogui.click()
+
+        mouse_pos = npv.vector_to_int_tuple(get_desired_direction() * 250 + get_center_of_game_screen())
+
+        print(mouse_pos)
+
+        pyautogui.moveTo(*mouse_pos)
+
+
+        handle_emergency_stop()
+        
+        
+        while time.time() < iteration_end_time:
             handle_emergency_stop()
             time.sleep(0.001)
 
