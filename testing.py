@@ -9,10 +9,12 @@ import sys
 
 START_KEY = "insert"
 EMERGENCY_STOP_KEY = "escape"
+STARTUP_TIMEOUT = 30
 
 MIN_LOOP_PERIOD = 0.5
 
-game_region = {"top": 300, "left": 300, "width": 800, "height": 600}
+screen_region = {"top": 0, "left": 0, "width": pyautogui.size()[0], "height": pyautogui.size()[1]}
+game_region = screen_region.copy() #{"top": 300, "left": 300, "width": 800, "height": 600}
 
 
 EMERGENCY_STOP_ACTIVE = False
@@ -51,17 +53,17 @@ def get_screenshot():
     return cv2.imread(filename)
 
 
-def limit_loop_speed():
-    end_time = time.time() + MIN_LOOP_PERIOD
-    while time.time() < end_time:
-        time.sleep(0.001)
-        handle_emergency_stop()
-
 def main():
     print(f"awaiting keyboard input '{START_KEY}' to start loop")
 
+    end_time = time.time() + STARTUP_TIMEOUT
     while not keyboard.is_pressed(START_KEY):
+        handle_emergency_stop()
         time.sleep(0.001)
+        if time.time() >= end_time:
+            global EMERGENCY_STOP_ACTIVE
+            EMERGENCY_STOP_ACTIVE = True
+            print("startup timed out")
 
     while True:
         handle_emergency_stop()
@@ -80,7 +82,10 @@ def main():
 
         handle_emergency_stop()
         
-        limit_loop_speed()
+        end_time = time.time() + MIN_LOOP_PERIOD
+        while time.time() < end_time:
+            handle_emergency_stop()
+            time.sleep(0.001)
 
 
 if __name__ == "__main__":
