@@ -7,6 +7,7 @@ import mss
 import keyboard
 import sys
 import math
+from PIL import ImageGrab
 
 
 START_KEY = "insert"
@@ -18,8 +19,13 @@ MIN_LOOP_PERIOD = 1 / 60
 SCREEN_SIZE = (pyautogui.size()[0], pyautogui.size()[1])
 SCREEN_CENTER = (SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2)
 
-
-game_region = {"top": 100, "left": 100, "width": SCREEN_SIZE[0]-200, "height": SCREEN_SIZE[1]-200}
+# # region to capture (left, top, right, bottom)
+game_region = (100, 100, SCREEN_SIZE[0]-100, SCREEN_SIZE[1]-100)
+def get_center_of_game_region():
+    return (
+        (game_region[0] + game_region[2]) / 2,
+        (game_region[1] + game_region[3]) / 2
+    )
 
 
 EMERGENCY_STOP_ACTIVE = False
@@ -46,28 +52,21 @@ keyboard.on_press(_emergency_stop_trigger)
 
 
 
-def get_center_of_game_screen():
-    return (game_region["left"] + game_region["width"] // 2, game_region["top"] + game_region["height"] // 2)
-
-
-
-def get_screenshot():
-    with mss.mss() as sct:
-        filename = sct.shot(output="screenshot.png")
-
-    return cv2.imread(filename)
+def get_screenshot(region=None):
+    return ImageGrab.grab(region)
 
 
 
 def get_desired_direction():
     t = (time.time() % (2*math.pi))
-    print(t)
+    # print(t)
     d = (math.cos(t), math.sin(t))
     return npv.normalize(npv.to_vector(d))
 
 
 def main():
-    print(f"awaiting keyboard input '{START_KEY}' to start loop")
+    print(f"awaiting keyboard input '{START_KEY}' to start the loop")
+    print(f"awaiting keyboard input '{EMERGENCY_STOP_KEY}' to stop the loop")
 
     end_time = time.time() + STARTUP_TIMEOUT
     while not keyboard.is_pressed(START_KEY):
@@ -85,7 +84,7 @@ def main():
         handle_emergency_stop()
 
 
-        # screenshot = get_screenshot()
+        screenshot = get_screenshot(game_region)
         
 
         handle_emergency_stop()
@@ -95,9 +94,7 @@ def main():
         # pyautogui.moveTo(game_center[0] + 50, game_center[1])
         # pyautogui.click()
 
-        mouse_pos = npv.vector_to_int_tuple(get_desired_direction() * 250 + get_center_of_game_screen())
-
-        print(mouse_pos)
+        mouse_pos = npv.vector_to_int_tuple(get_desired_direction() * 300 + get_center_of_game_region())
 
         pyautogui.moveTo(*mouse_pos)
 
