@@ -7,8 +7,8 @@ import keyboard
 import sys
 
 
-START_KEY = "right ctrl"
-EMERGENCY_STOP_KEY = "f"
+START_KEY = "insert"
+EMERGENCY_STOP_KEY = "escape"
 
 MIN_LOOP_PERIOD = 0.5
 
