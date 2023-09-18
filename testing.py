@@ -7,7 +7,7 @@ import keyboard
 import sys
 
 
-START_KEY = "ctrl_r"
+START_KEY = "right ctrl"
 EMERGENCY_STOP_KEY = "f"
 
 MIN_LOOP_PERIOD = 0.5
@@ -57,7 +57,12 @@ def limit_loop_speed():
         time.sleep(0.001)
         handle_emergency_stop()
 
-def main_loop():
+def main():
+    print(f"awaiting keyboard input '{START_KEY}' to start loop")
+
+    while not keyboard.is_pressed(START_KEY):
+        time.sleep(0.001)
+
     while True:
         handle_emergency_stop()
         # if keyboard.is_pressed(EMERGENCY_STOP_KEY):
@@ -79,4 +84,4 @@ def main_loop():
 
 
 if __name__ == "__main__":
-    main_loop()
+    main()
